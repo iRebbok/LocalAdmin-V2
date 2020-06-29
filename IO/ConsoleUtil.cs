@@ -6,7 +6,7 @@ namespace LocalAdmin.V2.IO
     {
         private static readonly char[] ToTrim = { '\n', '\r' };
 
-        private static object _lck = new object();
+        private static readonly object _lck = new object();
 
         public static void Clear()
         {

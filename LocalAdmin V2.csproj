@@ -27,10 +27,10 @@
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     </PropertyGroup>
-	
+
      <!-- Linux only exit handling -->
     <PropertyGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
-        <DefineConstants>LINUX_SIGNALS</DefineConstants>
+        <DefineConstants>$(DefineConstants);LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
     <ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
         <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />

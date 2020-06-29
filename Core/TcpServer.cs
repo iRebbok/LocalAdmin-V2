@@ -80,7 +80,7 @@ namespace LocalAdmin.V2.Core
         {
             lock (lck)
             {
-                if (exit) 
+                if (exit)
                     return;
                 exit = true;
 

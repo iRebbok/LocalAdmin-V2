@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin
     {
-        public const string VersionString = "2.2.4";
+        public const string VersionString = "2.2.5";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
 
         public string? LocalAdminExecutable { get; private set; }
@@ -59,11 +59,7 @@ namespace LocalAdmin.V2.Core
                             return ushort.TryParse(input, out port);
                         port = 7777;
                         return true;
-
-                    }, () => { }, () =>
-                    {
-                        ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red);
-                    });
+                    }, () => { }, () => ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red));
                 }
                 else
                 {
@@ -103,7 +99,7 @@ namespace LocalAdmin.V2.Core
                 Task.WaitAll(readerTask);
 
                 // If the game was terminated intentionally, then wait, otherwise no
-                Exit(0, gameProcess != null && gameProcess.HasExited); // After the readerTask is completed this will happen
+                Exit(0, gameProcess?.HasExited == true); // After the readerTask is completed this will happen
             }
             catch (Exception ex)
             {
@@ -127,7 +123,7 @@ namespace LocalAdmin.V2.Core
         public void StartSession(ushort port)
         {
             // Terminate the game, if the game process is exists
-            if (gameProcess != null && !gameProcess.HasExited)
+            if (gameProcess?.HasExited == false)
                 TerminateGame();
 
             Menu();
@@ -222,17 +218,19 @@ namespace LocalAdmin.V2.Core
             }
         }
 
+#if LINUX_SIGNALS
         private static bool CheckMonoException(Exception ex)
         {
             if (!ex.Message.Contains("MonoPosixHelper")) return false;
             ConsoleUtil.WriteLine("Native exit handling for Linux requires Mono to be installed!", ConsoleColor.Yellow);
             return true;
         }
+#endif
 
         private void SetupServer()
         {
             server = new TcpServer();
-            server.Received += (sender, line) =>
+            server.Received += (_, line) =>
             {
                 if (!byte.TryParse(line.AsSpan(0, 1), NumberStyles.HexNumber, null, out var colorValue))
                     colorValue = (byte)ConsoleColor.Gray;
@@ -247,7 +245,7 @@ namespace LocalAdmin.V2.Core
             readerTask = new Task(async () =>
             {
                 while (server == null)
-                    await Task.Delay(20);
+                    await Task.Delay(20).ConfigureAwait(false);
 
                 while (!exit)
                 {
@@ -269,7 +267,7 @@ namespace LocalAdmin.V2.Core
                         continue;
                     }
 
-                    if (gameProcess != null && gameProcess.HasExited)
+                    if (gameProcess?.HasExited == true)
                     {
                         ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
                         exit = true;
@@ -305,10 +303,16 @@ namespace LocalAdmin.V2.Core
                 {
                     FileName = scpslExecutable,
                     Arguments = $"-batchmode -nographics -nodedicateddelete -port{port} -console{server!.ConsolePort} -id{Process.GetCurrentProcess().Id}",
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
                 };
 
                 gameProcess = Process.Start(startInfo);
+                gameProcess.BeginOutputReadLine();
+                gameProcess.OutputDataReceived += OnUnityOutputRevieved;
+                gameProcess.BeginErrorReadLine();
+                gameProcess.ErrorDataReceived += OnUnityErrorRevieved;
             }
             else
             {
@@ -350,8 +354,14 @@ namespace LocalAdmin.V2.Core
         private void TerminateGame()
         {
             server?.Stop();
-            if (gameProcess != null && !gameProcess!.HasExited)
+            if (gameProcess?.HasExited == false)
+            {
+                gameProcess.CancelOutputRead();
+                gameProcess.OutputDataReceived -= OnUnityOutputRevieved;
+                gameProcess.CancelErrorRead();
+                gameProcess.ErrorDataReceived -= OnUnityErrorRevieved;
                 gameProcess.Kill();
+            }
         }
 
         /// <summary>
@@ -375,6 +385,24 @@ namespace LocalAdmin.V2.Core
                 }
                 Environment.Exit(code);
             }
+        }
+
+        public void OnUnityOutputRevieved(object sender, DataReceivedEventArgs data)
+        {
+            // Although it always says that it'll not be null,
+            // but when it's destroyed, we get a null message
+            if (string.IsNullOrEmpty(data.Data))
+                return;
+
+            ConsoleUtil.WriteLine(data.Data, ConsoleColor.DarkCyan);
+        }
+
+        public void OnUnityErrorRevieved(object sender, DataReceivedEventArgs data)
+        {
+            if (string.IsNullOrEmpty(data.Data))
+                return;
+
+            Console.WriteLine(data.Data, ConsoleColor.DarkRed);
         }
     }
 }
