@@ -58,18 +58,18 @@ namespace LocalAdmin.V2.Core
 
                             if (networkStream?.DataAvailable == true)
                             {
-                                await networkStream.ReadAsync(lengthBuffer, 0, offset);
+                                await networkStream.ReadAsync(lengthBuffer, 0, offset).ConfigureAwait(false);
                                 var length = MemoryMarshal.Cast<byte, int>(lengthBuffer)[0];
 
                                 var buffer = ArrayPool<byte>.Shared.Rent(length);
-                                await networkStream.ReadAsync(buffer, 0, length);
+                                await networkStream.ReadAsync(buffer, 0, length).ConfigureAwait(false);
                                 var message = encoding.GetString(buffer, 0, length);
                                 ArrayPool<byte>.Shared.Return(buffer);
 
                                 Received?.Invoke(this, message);
                             }
 
-                            await Task.Delay(10);
+                            await Task.Delay(10).ConfigureAwait(false);
                         }
                     });
                 }, listener);

@@ -26,7 +26,7 @@ namespace LocalAdmin.V2.Core
 
     public sealed class LocalAdmin
     {
-        public const string VersionString = "2.2.5";
+        public const string VersionString = "6.6.6";
         public static readonly LocalAdmin Singleton = new LocalAdmin();
 
         public string? LocalAdminExecutable { get; private set; }
@@ -39,10 +39,11 @@ namespace LocalAdmin.V2.Core
         private string? scpslExecutable;
         private bool exit;
         private volatile bool _processClosing;
+        private readonly object _lockObject = new object();
 
         public void Start(string[] args)
         {
-            Console.Title = $"LocalAdmin v. {VersionString}";
+            Console.Title = GetTitle();
 
             try
             {
@@ -59,7 +60,9 @@ namespace LocalAdmin.V2.Core
                             return ushort.TryParse(input, out port);
                         port = 7777;
                         return true;
-                    }, () => { }, () => ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red));
+                    },
+                    () => { },
+                    () => ConsoleUtil.WriteLine("Port number must be a unsigned short integer.", ConsoleColor.Red));
                 }
                 else
                 {
@@ -128,7 +131,7 @@ namespace LocalAdmin.V2.Core
 
             Menu();
 
-            Console.Title = $"LocalAdmin v. {VersionString} on port {port}";
+            Console.Title = GetTitle(GamePort);
 
             ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
@@ -238,6 +241,7 @@ namespace LocalAdmin.V2.Core
                 ConsoleUtil.WriteLine(line[1..], (ConsoleColor)colorValue);
             };
             server.Start();
+            Console.Title = GetTitle(GamePort, server.ConsolePort);
         }
 
         private void SetupReader()
@@ -369,7 +373,7 @@ namespace LocalAdmin.V2.Core
         /// </summary>
         public void Exit(int code = -1, bool waitForKey = false)
         {
-            lock (this)
+            lock (_lockObject)
             {
                 if (_processClosing)
                 {
@@ -403,6 +407,21 @@ namespace LocalAdmin.V2.Core
                 return;
 
             Console.WriteLine(data.Data, ConsoleColor.DarkRed);
+        }
+
+        internal static string GetTitle(ushort? sPort = null, ushort? cPort = null)
+        {
+            const string DEFAULT_TITLE = "LocalAdmin v." + VersionString;
+            const string SPORT_TEMPLATE = " | SPort {0}";
+            const string CPORT_TEMPLATE = " | CPort {0}";
+
+            string result = DEFAULT_TITLE;
+            if (!(sPort is null))
+                result += string.Format(SPORT_TEMPLATE, sPort);
+            if (!(cPort is null))
+                result += string.Format(CPORT_TEMPLATE, cPort);
+
+            return result;
         }
     }
 }
