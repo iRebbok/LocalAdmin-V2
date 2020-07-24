@@ -143,6 +143,7 @@ namespace LocalAdmin.V2.Core
 
             GamePort = port;
             RunScpsl(port);
+            Console.Title = GetTitle(GamePort, server.ConsolePort);
         }
 
         private void Menu()
@@ -241,7 +242,6 @@ namespace LocalAdmin.V2.Core
                 ConsoleUtil.WriteLine(line[1..], (ConsoleColor)colorValue);
             };
             server.Start();
-            Console.Title = GetTitle(GamePort, server.ConsolePort);
         }
 
         private void SetupReader()
