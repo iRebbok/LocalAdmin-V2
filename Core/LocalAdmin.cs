@@ -131,7 +131,7 @@ namespace LocalAdmin.V2.Core
 
             Menu();
 
-            Console.Title = GetTitle(GamePort);
+            Console.Title = GetTitle(port);
 
             ConsoleUtil.WriteLine("Started new session.", ConsoleColor.DarkGreen);
             ConsoleUtil.WriteLine("Trying to start server...", ConsoleColor.Gray);
