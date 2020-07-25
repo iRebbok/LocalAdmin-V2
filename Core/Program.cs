@@ -1,4 +1,5 @@
 ﻿using LocalAdmin.V2.IO;
+using LocalAdmin.V2.IO.Output.Native;
 using System;
 using System.IO;
 using System.Reflection;
@@ -61,7 +62,7 @@ namespace LocalAdmin.V2.Core
             }
             catch (Exception ex)
             {
-                File.WriteAllText($"{DateTime.UtcNow:yyyy-MM-ddTHH-mm-ssZ}-crash.txt", ex.ToString());
+                File.WriteAllText($"{DateTime.UtcNow.ToString(LogOutput.LOG_DATE_FORMAT)}-crash.txt", ex.ToString());
             }
         }
 

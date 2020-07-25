@@ -9,7 +9,7 @@ namespace LocalAdmin.V2.IO.Output.Native
         private StreamWriter? _writter;
         private const string LOG_FOLDER = "la_logs";
         private const string LOG_EXTENSION = "log";
-        public const string LOG_DATE_FORMAT = "yyyy-MM-ddTHH-mm-ssZ";
+        public const string LOG_DATE_FORMAT = "yyyy-MM-ddTHH-mm-sssZ";
         private static readonly UTF8Encoding encoding = new UTF8Encoding(false, true);
 
         public void Start(DateTime time)
