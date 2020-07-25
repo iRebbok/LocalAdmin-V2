@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using LocalAdmin.V2.Core;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace LocalAdmin.V2.IO.ExitHandlers
@@ -8,10 +9,13 @@ namespace LocalAdmin.V2.IO.ExitHandlers
     /// </summary>
     internal sealed class WindowsHandler : IExitHandler
     {
-        public static readonly WindowsHandler Handler = new WindowsHandler();
-
         // .Net Core sometimes crashes when the delegate isn't in a field
-        private static readonly HandlerRoutine Routine = OnNativeSignal;
+        private readonly HandlerRoutine Routine;
+
+        public WindowsHandler()
+        {
+            Routine = OnNativeSignal;
+        }
 
         public void Setup()
         {
@@ -21,11 +25,13 @@ namespace LocalAdmin.V2.IO.ExitHandlers
             }
         }
 
-        private static bool OnNativeSignal(CtrlTypes ctrl)
+        private bool OnNativeSignal(CtrlTypes ctrl)
         {
-            Core.LocalAdmin.Singleton.Exit(0);
+            SessingManager.Exit(0);
             return true;
         }
+
+        public bool IsAvailable() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
         #region Native
 

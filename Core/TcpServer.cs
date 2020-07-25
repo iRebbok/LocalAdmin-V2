@@ -8,19 +8,20 @@ using System.Threading.Tasks;
 
 namespace LocalAdmin.V2.Core
 {
-    public class TcpServer
+    public sealed class TcpServer
     {
-        public event EventHandler<string>? Received;
+        public event Action<string>? Received;
 
         private readonly TcpListener listener;
+        private readonly object lck = new object();
+        private readonly UTF8Encoding encoding = new UTF8Encoding(false, true);
+
         private TcpClient? client;
         private NetworkStream? networkStream;
 
         internal ushort ConsolePort;
         internal bool Connected;
         private bool exit = true;
-        private readonly object lck = new object();
-        private readonly UTF8Encoding encoding = new UTF8Encoding(false, true);
 
         public TcpServer() => listener = new TcpListener(IPAddress.Loopback, 0);
 
@@ -66,7 +67,7 @@ namespace LocalAdmin.V2.Core
                                 var message = encoding.GetString(buffer, 0, length);
                                 ArrayPool<byte>.Shared.Return(buffer);
 
-                                Received?.Invoke(this, message);
+                                Received?.Invoke(message);
                             }
 
                             await Task.Delay(10).ConfigureAwait(false);
@@ -76,6 +77,8 @@ namespace LocalAdmin.V2.Core
             }
         }
 
+        public bool IsConnected() => !exit && !(client is null);
+
         public void Stop()
         {
             lock (lck)
@@ -84,12 +87,14 @@ namespace LocalAdmin.V2.Core
                     return;
                 exit = true;
 
+                ConsolePort = 0;
                 listener.Stop();
                 client?.Close();
+                client = null;
             }
         }
 
-        public void WriteLine(string input)
+        public void Write(string input)
         {
             lock (lck)
             {
@@ -105,5 +110,7 @@ namespace LocalAdmin.V2.Core
                 ArrayPool<byte>.Shared.Return(buffer);
             }
         }
+
+        public bool ReceiverIsRegistered() => !(Received is null);
     }
 }

@@ -8,6 +8,7 @@
         <AssemblyName>LocalAdmin</AssemblyName>
         <Product>LocalAdmin V2</Product>
         <PackageId>LocalAdmin V2</PackageId>
+        <Version>666</Version>
         <Company>Northwood Studios</Company>
         <Authors>KernelError, zabszk</Authors>
         <Copyright>Copyright by KernelError and Łukasz Jurczyk, 2019 - 2020</Copyright>
@@ -21,18 +22,12 @@
         <Optimize>true</Optimize>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <!-- Disable automatic generation of version attribute -->
-        <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
-        <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-        <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    </PropertyGroup>
-
      <!-- Linux only exit handling -->
     <PropertyGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
         <DefineConstants>$(DefineConstants);LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
-    <ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+    <!-- Condition="'$(RuntimeIdentifier)'=='linux-x64'" -->
+    <ItemGroup>
         <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
     </ItemGroup>
 
@@ -42,7 +37,6 @@
         <None Remove="LICENSE" />
         <None Remove="LocalAdmin V2.sln.DotSettings" />
         <None Remove="nuget.config" />
-        <None Remove="Properties\launchSettings.json" />
         <None Remove="README.md" />
     </ItemGroup>
     <ItemGroup>

@@ -1,48 +1,63 @@
-﻿using System;
+﻿using LocalAdmin.V2.IO.Output;
+using System;
 
 namespace LocalAdmin.V2.IO
 {
+    /*
+    * Console colors:
+    * Gray - LocalAdmin log
+    * Red - critical error
+    * DarkGray - insignificant info
+    * Cyan - Header or important tip
+    * Yellow - warning
+    * DarkGreen - success
+    * Blue - normal SCPSL log
+*/
+
     public static class ConsoleUtil
     {
-        private const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.fff zzz";
-        private static readonly char[] _toTrim = { '\n', '\r' };
         private static readonly object _lck = new object();
 
         public static void Clear()
         {
             lock (_lck)
-            {
                 Console.Clear();
-            }
         }
 
-        public static void Write(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
+        public static void Write(string s, ConsoleColor c = ConsoleColor.White, string? time = null)
         {
-            RawWrite(content, color, height, false);
+            time ??= DateTime.Now.ToString(OutputManager.CONSOLE_DATE_FORMAT);
+            RawWrite(s, c, false, time);
         }
 
-        public static void WriteLine(string content, ConsoleColor color = ConsoleColor.White, int height = 0)
+        public static void WriteLine(string s, ConsoleColor c = ConsoleColor.White, string? time = null)
         {
-            RawWrite(content, color, height, true);
+            time ??= DateTime.Now.ToString(OutputManager.CONSOLE_DATE_FORMAT);
+            RawWrite(s, c, true, time);
         }
 
-        private static void RawWrite(string content, ConsoleColor color, int height, bool includeNewLine)
+        internal static void RawWrite(string s, ConsoleColor c, bool includeNewLine, string time)
         {
-            content = content.Trim().Trim(_toTrim);
-            if (string.IsNullOrEmpty(content))
-                return;
-
             lock (_lck)
             {
-                var formatedDate = $"[{DateTime.Now.ToString(DATE_FORMAT)}]";
-                Console.ResetColor();
-                Console.ForegroundColor = color;
-                if (height > 0)
-                    Console.CursorTop += height;
+                if (string.IsNullOrEmpty(s))
+                {
+                    if (includeNewLine)
+                        Console.WriteLine(string.Empty);
+                    else
+                        Console.Write(string.Empty);
 
-                Console.Write(formatedDate);
-                Console.Write(" "); // space
-                Console.Write(content);
+                    return;
+                }
+
+                Console.ResetColor();
+                Console.ForegroundColor = c;
+
+                Console.Write("[");
+                Console.Write(time);
+                Console.Write("]");
+                Console.CursorLeft++;
+                Console.Write(s);
                 if (includeNewLine)
                     Console.WriteLine();
                 Console.ResetColor();

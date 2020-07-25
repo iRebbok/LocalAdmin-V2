@@ -1,30 +1,30 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
+﻿using System;
 
 namespace LocalAdmin.V2.Commands.Meta
 {
-    internal class CommandService
+    internal static class CommandService
     {
-        private readonly List<CommandBase> commands = new List<CommandBase>();
+        private static readonly CommandBase[] _commands;
 
-        internal void RegisterCommand(CommandBase command)
+        static CommandService()
         {
-            commands.Add(command);
+            _commands = new CommandBase[]
+            {
+                new HelpCommand(),
+                new LicenseCommand(),
+                new NewCommand(),
+                new RestartCommand()
+            };
         }
 
-        internal void UnregisterCommand(CommandBase command)
+        public static CommandBase? GetCommandByName(string name)
         {
-            if (commands.Contains(command))
-                commands.Remove(command);
-            else
-                throw new KeyNotFoundException();
-        }
-
-        internal CommandBase? GetCommandByName(string name)
-        {
-            foreach (var command in commands)
-                if (command.Name == name.ToUpper(CultureInfo.InvariantCulture))
-                    return command;
+            for (int z = 0; z < _commands.Length; z++)
+            {
+                var cmd = _commands[z];
+                if (cmd.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return cmd;
+            }
 
             return null;
         }

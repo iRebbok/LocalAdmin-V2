@@ -2,6 +2,8 @@
 {
     internal interface IExitHandler
     {
+        bool IsAvailable();
+
         void Setup();
     }
 }
