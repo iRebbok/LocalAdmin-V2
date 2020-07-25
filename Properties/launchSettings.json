@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "LocalAdmin V2": {
-      "commandName": "Project",
-      "commandLineArgs": "9999",
-      "workingDirectory": "E:\\SteamLibrary\\steamapps\\common\\SCP Secret Laboratory Dedicated Server"
-    }
-  }
-}
