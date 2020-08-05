@@ -43,23 +43,27 @@ namespace LocalAdmin.V2.IO
                 if (string.IsNullOrEmpty(s))
                 {
                     if (includeNewLine)
-                        Console.WriteLine(string.Empty);
+                        Console.WriteLine();
                     else
                         Console.Write(string.Empty);
 
                     return;
                 }
 
-                Console.ResetColor();
                 Console.ForegroundColor = c;
 
                 Console.Write("[");
                 Console.Write(time);
                 Console.Write("]");
+#if LINUX_SIGNALS
+                Console.Write(" ");
+#else
                 Console.CursorLeft++;
+#endif
                 Console.Write(s);
                 if (includeNewLine)
                     Console.WriteLine();
+
                 Console.ResetColor();
             }
         }

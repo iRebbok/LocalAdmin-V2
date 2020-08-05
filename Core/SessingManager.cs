@@ -25,11 +25,10 @@ namespace LocalAdmin.V2.Core
 #endif
             new WindowsHandler()
         };
-        private static Task? _reader;
 
-        public static readonly TcpServer Server = new TcpServer();
+        public static TcpServer? Server { get; private set; }
         public static Process? GameProcess { get; private set; }
-        public static ushort ConsolePort => Server.ConsolePort;
+        public static ushort ConsolePort => Server?.ConsolePort ?? 0;
         public static ushort GamePort { get; private set; }
         public static string ScpSlExecutable
         {
@@ -63,7 +62,6 @@ namespace LocalAdmin.V2.Core
 
             OutputManager.Start();
             SetupServer();
-            SetupReader();
             RunGame();
             UpdateTitle();
         }
@@ -86,6 +84,7 @@ namespace LocalAdmin.V2.Core
                     FileName = executable,
                     Arguments = $"-batchmode -nographics -nodedicateddelete -port{GamePort} -console{ConsolePort}",
                     CreateNoWindow = true,
+                    UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
                 };
@@ -110,63 +109,57 @@ namespace LocalAdmin.V2.Core
 
         private static void SetupServer()
         {
-            if (!Server.ReceiverIsRegistered())
-                Server.Received += OnGameMessage;
+            Server = new TcpServer();
+            Server.Received += OnGameMessage;
             Server.Start();
         }
 
-        private static void SetupReader()
+        internal static async Task SetupReader()
         {
-            if (!(_reader is null))
-                return;
+            while (GameProcess is null)
+                await Task.Delay(10).ConfigureAwait(false);
 
-            _reader = Task.Run(async () =>
+            while (true)
             {
-                while (GameProcess is null)
-                    await Task.Delay(10).ConfigureAwait(false);
+                var input = Console.ReadLine();
 
-                while (true)
+                if (string.IsNullOrWhiteSpace(input))
+                    continue;
+
+                //var currentLineCursor = Console.CursorTop;
+                //Console.SetCursorPosition(0, Console.CursorTop - 1);
+                ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta);
+                //Console.SetCursorPosition(0, currentLineCursor);
+
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                    break;
+
+                var split = input.Split(' ');
+                var cmd = split[0];
+                var command = CommandService.GetCommandByName(cmd);
+
+                if (!(command is null))
                 {
-                    var input = Console.ReadLine();
-
-                    if (string.IsNullOrWhiteSpace(input))
-                        continue;
-
-                    var currentLineCursor = Console.CursorTop;
-                    Console.SetCursorPosition(0, Console.CursorTop - 1);
-                    ConsoleUtil.WriteLine($">>> {input}", ConsoleColor.DarkMagenta);
-                    Console.SetCursorPosition(0, currentLineCursor);
-
-                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
-                        break;
-
-                    var split = input.Split(' ');
-                    var cmd = split[0];
-                    var command = CommandService.GetCommandByName(cmd);
-
-                    if (!(command is null))
-                    {
-                        command.Execute(split.Skip(1).ToArray());
-                    }
-                    else if (Server.Connected)
-                    {
-                        if (GameProcess?.HasExited == true)
-                        {
-                            ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
-                            break;
-                        }
-
-                        Server.Write(input);
-                    }
-                    else
-                    {
-                        ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
-                    }
+                    command.Execute(split.Skip(1).ToArray());
                 }
+                else if (Server!.Connected)
+                {
+                    if (GameProcess?.HasExited == true)
+                    {
+                        ConsoleUtil.WriteLine("Failed to send command - the game process was terminated...", ConsoleColor.Red);
+                        break;
+                    }
 
-                // If the game was terminated intentionally, then wait, otherwise no
-                Exit(0, GameProcess?.HasExited == true); // After the readerTask is completed this will happen
-            });
+                    Server.Write(input);
+                }
+                else
+                {
+                    ConsoleUtil.WriteLine("Failed to send command - connection to server process hasn't been established yet.", ConsoleColor.Yellow);
+                }
+            }
+
+            // If the game was terminated intentionally, then wait, otherwise no
+            Exit(0, GameProcess?.HasExited == true); // After the readerTask is completed this will happen
         }
 
         /// <summary>
@@ -182,7 +175,7 @@ namespace LocalAdmin.V2.Core
                 GameProcess.ErrorDataReceived -= OnUnityErrorRevieved;
                 GameProcess.Kill();
             }
-            Server.Stop();
+            Server?.Stop();
         }
 
         /// <summary>
@@ -229,7 +222,7 @@ namespace LocalAdmin.V2.Core
             if (string.IsNullOrEmpty(data.Data))
                 return;
 
-            OutputManager.WriteLine(data.Data, ConsoleColor.DarkCyan);
+            OutputManager.WriteLine($"[SCPSL] {data.Data}", ConsoleColor.DarkCyan);
         }
 
         private static void OnUnityErrorRevieved(object _, DataReceivedEventArgs data)
@@ -237,7 +230,7 @@ namespace LocalAdmin.V2.Core
             if (string.IsNullOrEmpty(data.Data))
                 return;
 
-            OutputManager.WriteLine(data.Data, ConsoleColor.DarkRed);
+            OutputManager.WriteLine($"[SCPSL] {data.Data}", ConsoleColor.DarkRed);
         }
 
         private static void OnGameMessage(string line)

@@ -23,13 +23,9 @@
     </PropertyGroup>
 
      <!-- Linux only exit handling -->
-    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+    <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
         <DefineConstants>$(DefineConstants);LINUX_SIGNALS</DefineConstants>
     </PropertyGroup>
-    <!-- Condition="'$(RuntimeIdentifier)'=='linux-x64'" -->
-    <ItemGroup>
-        <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
-    </ItemGroup>
 
     <ItemGroup>
         <None Remove=".editorconfig" />
@@ -40,6 +36,7 @@
         <None Remove="README.md" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+        <PackageReference Condition="'$(Configuration)' == 'Release'" Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+        <PackageReference Condition="'$(RuntimeIdentifier)' == 'linux-x64'" Include="Mono.Posix.NETStandard" Version="1.0.0" />
     </ItemGroup>
 </Project>

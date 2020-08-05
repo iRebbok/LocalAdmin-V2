@@ -1,6 +1,5 @@
 ﻿using LocalAdmin.V2.IO.Output.Native;
 using System;
-using System.Threading.Tasks;
 
 namespace LocalAdmin.V2.IO.Output
 {
@@ -41,7 +40,7 @@ namespace LocalAdmin.V2.IO.Output
         public static void Dispose()
         {
             for (byte z = 0; z < _outputs.Length; z++)
-                Task.Run(_outputs[z].Dispose).ConfigureAwait(false);
+                _outputs[z].Dispose();
         }
 
         public static void Write(string s, ConsoleColor c) =>

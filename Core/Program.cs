@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace LocalAdmin.V2.Core
 {
@@ -12,12 +12,12 @@ namespace LocalAdmin.V2.Core
     {
         public static readonly string VERSION = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
 
-        private static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            StartSafe(args);
+            await StartSafe(args).ConfigureAwait(false);
         }
 
-        private static void StartSafe(string[] args)
+        private static async Task StartSafe(string[] args)
         {
             try
             {
@@ -58,7 +58,7 @@ namespace LocalAdmin.V2.Core
                 }
 
                 SessingManager.SwitchPort(port);
-                Thread.Sleep(Timeout.Infinite);
+                await SessingManager.SetupReader().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
