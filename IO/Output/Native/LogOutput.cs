@@ -30,7 +30,8 @@ namespace LocalAdmin.V2.IO.Output.Native
             _writter!.Write("[");
             _writter!.Write(entry.Date);
             _writter!.Write("] ");
-            _writter.WriteLine(entry.Content);
+            _writter.Write(entry.Content);
+            _writter.Write("\n");
         }
 
         public void WriteLine()
