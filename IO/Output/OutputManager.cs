@@ -21,7 +21,6 @@ namespace LocalAdmin.V2.IO.Output
     {
         public const string CONSOLE_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.fff zzz";
 
-        private readonly static char[] _toTrim = { '\n', '\r' };
         private readonly static IOutput[] _outputs = new IOutput[2]
             {
                 new ConsoleOutput(),
@@ -67,7 +66,8 @@ namespace LocalAdmin.V2.IO.Output
 
         private static string PrepareContent(string s)
         {
-            return s.Trim().Trim(_toTrim).Replace("\r\n", Environment.NewLine).Replace("\r", Environment.NewLine).Replace("\n", Environment.NewLine);
+            // Replaces CRLF with LF
+            return s.Replace("\r\n", "\n");
         }
     }
 }
